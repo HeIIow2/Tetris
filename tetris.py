@@ -150,10 +150,10 @@ class Grid:
                 figure.y -= 1
                 self.to_pop.append(i)
 
-    def spawn_figure(self, figure: Figure, x: int):
+    def spawn_figure(self, figure: Figure):
         figure = copy.deepcopy(figure)
         figure.randomize_rotation()
-        figure.x = x
+        figure.x = random.randint(0, self.grid_width - figure.width)
 
         self.figures.append(figure)
 
@@ -195,7 +195,7 @@ class Grid:
         img_width = width * self.grid_width + spacing * (self.grid_width + 1)
         img_height = height * self.grid_height + spacing * (self.grid_height + 1)
 
-        img = Image.new("RGB", (img_width, img_height), color="#fff")
+        img = Image.new("RGB", (img_width, img_height), color="#666")
 
         y = spacing
         for i in range(self.grid_height):
@@ -207,8 +207,40 @@ class Grid:
 
         return img
 
+    def right(self):
+        for i, figure in enumerate(self.figures):
+            figure.x += 1
+            if not self.is_placeable(figure):
+                figure.x -= 1
 
-speed = 250
+    def left(self):
+        for i, figure in enumerate(self.figures):
+            figure.x -= 1
+            if not self.is_placeable(figure):
+                figure.x += 1
+
+    def move_in_bounds(self, index: int):
+        while not self.is_placeable(self.figures[index]):
+            if self.figures[index].x < 0:
+                self.figures[index].x += 1
+            else:
+                self.figures[index].x -= 1
+
+    def turn_right(self):
+        for i in range(len(self.figures)):
+            self.figures[i].rotate_right()
+            self.move_in_bounds(i)
+
+    def turn_left(self):
+        for i in range(len(self.figures)):
+            self.figures[i].rotate_left()
+            self.move_in_bounds(i)
+
+    def allow_spawn(self):
+        return len(self.figures) == 0
+
+
+speed = 500
 
 FIGURES = [
     Figure(4, [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0], 1),
@@ -249,11 +281,41 @@ def update():
     refresh_image()
     root.after(speed, update)
 
-    if cycle%10 == 0:
-        grid.spawn_figure(FIGURES[random.randint(0, 6)], 2)
+    if grid.allow_spawn():
+        grid.spawn_figure(FIGURES[random.randrange(len(FIGURES))])
 
     cycle += 1
 
+
+def on_key_press(e):
+    if e.keycode == 68 or e.keycode == 39:
+        grid.right()
+        refresh_image()
+        return
+
+    if e.keycode == 65 or e.keycode == 37:
+        grid.left()
+        refresh_image()
+        return
+
+    if e.keycode == 81:
+        grid.turn_left()
+        refresh_image()
+        return
+
+    if e.keycode == 69:
+        grid.turn_right()
+        refresh_image()
+        return
+
+    if e.keycode == 40 or e.keycode == 83 or e.keycode == 32:
+        grid.update()
+        refresh_image()
+        return
+    print(e)
+
+
+root.bind('<KeyPress>', on_key_press)
 
 root.after(speed, update)
 root.mainloop()
