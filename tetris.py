@@ -1,6 +1,6 @@
 import copy
 import tkinter as tk
-from PIL import Image, ImageDraw, ImageTk
+from PIL import Image, ImageTk
 import random
 
 
@@ -208,7 +208,7 @@ class Grid:
                 number_of_full_row += 1
                 self.remove_row(i)
 
-        if not number_of_full_row:
+        if number_of_full_row:
             print(f"removed {number_of_full_row} rows in one cycle")
 
         img_width = width * self.grid_width + spacing * (self.grid_width + 1)
@@ -276,7 +276,7 @@ root.title("Tetris")
 label = tk.Label(root)
 img = None
 
-grid = Grid(14, 20)
+grid = Grid(15, 20)
 
 queue_ = []
 
@@ -332,7 +332,7 @@ def on_key_press(e):
         refresh_image()
         return
 
-    if e.keycode == 69:
+    if e.keycode == 69 or e.keycode == 38 or e.keycode == 87:
         grid.turn_right()
         refresh_image()
         return
