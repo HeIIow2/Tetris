@@ -157,6 +157,10 @@ class Grid:
 
         self.figures.append(figure)
 
+    def remove_row(self, row_ind:int):
+        self.grid.pop(row_ind)
+        self.grid.insert(0, copy.deepcopy(self.grid[0]))
+
     def draw(self, width: int, height: int, spacing: int):
         temp_grid = copy.deepcopy(self.grid)
         for n, fig in enumerate(self.figures):
@@ -191,6 +195,21 @@ class Grid:
             if cell.mode != 0:
                 self.game_over()
                 break
+
+        # Wenn eine Zeile voll ist, lösche diese
+        number_of_full_row = 0
+        for i, row in enumerate(self.grid):
+            is_full = True
+            for cell in row:
+                if cell.mode == 0:
+                    is_full = False
+
+            if is_full:
+                number_of_full_row += 1
+                self.remove_row(i)
+
+        if not number_of_full_row:
+            print(f"removed {number_of_full_row} rows in one cycle")
 
         img_width = width * self.grid_width + spacing * (self.grid_width + 1)
         img_height = height * self.grid_height + spacing * (self.grid_height + 1)
@@ -259,6 +278,7 @@ img = None
 
 grid = Grid(14, 20)
 
+queue_ = []
 
 def refresh_image():
     global img
@@ -271,6 +291,12 @@ label.pack()
 
 cycle = 0
 
+def refill_queue():
+    global queue_
+
+    queue_ = list(range(len(FIGURES)))
+    random.shuffle(queue_)
+
 
 def update():
     global speed
@@ -282,7 +308,10 @@ def update():
     root.after(speed, update)
 
     if grid.allow_spawn():
-        grid.spawn_figure(FIGURES[random.randrange(len(FIGURES))])
+        if len(queue_) == 0:
+            refill_queue()
+        grid.spawn_figure(FIGURES[queue_[0]])
+        queue_.pop(0)
 
     cycle += 1
 
