@@ -1,4 +1,5 @@
 import copy
+import tkinter
 import tkinter as tk
 from PIL import Image, ImageTk
 import random
@@ -260,94 +261,129 @@ class Grid:
         return len(self.figures) == 0
 
 
-speed = 500
+class Game:
+    def __init__(self, ui_frame, width=10, height=20, level=0, start_speed=800):
+        self.cycle = 0
 
-FIGURES = [
-    Figure(4, [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0], 1),
-    Figure(3, [1, 0, 0, 1, 1, 1, 0, 0, 0], 2),
-    Figure(3, [0, 0, 1, 1, 1, 1, 0, 0, 0], 3),
-    Figure(2, [1, 1, 1, 1], 4),
-    Figure(3, [0, 1, 1, 1, 1, 0, 0, 0, 0], 5),
-    Figure(3, [0, 1, 0, 1, 1, 1, 0, 0, 0], 6),
-    Figure(3, [1, 1, 0, 0, 1, 1, 0, 0, 0], 7),
-]
+        self.grid = Grid(width=width, height=height)
+
+        self.ui_frame = ui_frame
+        self.ui_frame.bind('<KeyPress>', self.on_key_press)
+
+        self.img_label = tkinter.Label(self.ui_frame)
+        self.img = None
+        self.render()
+        self.img_label.pack()
+
+        self.level = level
+        self.speed = start_speed
+
+        self.prev_piece_ind = -1
+
+    def set_speed(self):
+        # https://gaming.stackexchange.com/questions/13057/tetris-difficulty#13129
+
+        # from level, to level, drop speed
+        # -1 means infinity
+        SPEEDS = [
+            [0, 0, 800],
+            [1, 1, 720],
+            [2, 2, 630],
+            [3, 3, 550],
+            [4, 4, 470],
+            [5, 5, 380],
+            [6, 6, 300],
+            [7, 7, 220],
+            [8, 8, 130],
+            [9, 9, 100],
+            [10, 12, 80],
+            [13, 15, 70],
+            [16, 18, 50],
+            [19, 28, 30],
+            [29, -1, 20]
+        ]
+
+        max_level = 0
+        speed_ = 800
+        for min_level, max_level, speed_ in SPEEDS:
+            if min_level <= self.level <= max_level:
+                self.speed = speed_
+
+        if max_level == -1:
+            self.speed = speed_
+
+    def get_next_piece(self):
+        # https://gaming.stackexchange.com/questions/13057/tetris-difficulty#13129
+
+        FIGURES = [
+            Figure(4, [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0], 1),
+            Figure(3, [1, 0, 0, 1, 1, 1, 0, 0, 0], 2),
+            Figure(3, [0, 0, 1, 1, 1, 1, 0, 0, 0], 3),
+            Figure(2, [1, 1, 1, 1], 4),
+            Figure(3, [0, 1, 1, 1, 1, 0, 0, 0, 0], 5),
+            Figure(3, [0, 1, 0, 1, 1, 1, 0, 0, 0], 6),
+            Figure(3, [1, 1, 0, 0, 1, 1, 0, 0, 0], 7),
+        ]
+
+        random_number = random.randint(0, 7)
+        if random_number == self.prev_piece_ind or random_number == 7:
+            random_number = random.randint(0, 6)
+
+        self.prev_piece_ind = random_number
+        return FIGURES[random_number]
+
+    def on_key_press(self, e):
+        if e.keycode == 68 or e.keycode == 39:
+            self.grid.right()
+            self.render()
+            return
+
+        if e.keycode == 65 or e.keycode == 37:
+            self.grid.left()
+            self.render()
+            return
+
+        if e.keycode == 81:
+            self.grid.turn_left()
+            self.render()
+            return
+
+        if e.keycode == 69 or e.keycode == 38 or e.keycode == 87:
+            self.grid.turn_right()
+            self.render()
+            return
+
+        if e.keycode == 40 or e.keycode == 83 or e.keycode == 32:
+            self.grid.update()
+            self.render()
+            return
+
+    def render(self):
+        self.img = ImageTk.PhotoImage(self.grid.draw(20, 20, 1))
+        self.img_label.config(image=self.img)
+
+    def update(self):
+        print(f"cycle {self.cycle}")
+
+        full_rows = self.grid.update()
+        self.render()
+
+        if self.grid.allow_spawn():
+            self.grid.spawn_figure(self.get_next_piece())
+
+        self.cycle += 1
+
 
 root = tk.Tk()
 root.title("Tetris")
-label = tk.Label(root)
-img = None
 
-grid = Grid(15, 20)
-
-queue_ = []
-
-
-def refresh_image():
-    global img
-    img = ImageTk.PhotoImage(grid.draw(20, 20, 1))
-    label.config(image=img)
-
-
-refresh_image()
-label.pack()
-
-cycle = 0
-
-
-def refill_queue():
-    global queue_
-
-    queue_ = list(range(len(FIGURES)))
-    random.shuffle(queue_)
+game = Game(root)
 
 
 def update():
-    global speed
-    global cycle
-
-    print(f"update {cycle}")
-    grid.update()
-    refresh_image()
-    root.after(speed, update)
-
-    if grid.allow_spawn():
-        if len(queue_) == 0:
-            refill_queue()
-        grid.spawn_figure(FIGURES[queue_[0]])
-        queue_.pop(0)
-
-    cycle += 1
+    game.update()
+    root.after(game.speed, update)
 
 
-def on_key_press(e):
-    if e.keycode == 68 or e.keycode == 39:
-        grid.right()
-        refresh_image()
-        return
-
-    if e.keycode == 65 or e.keycode == 37:
-        grid.left()
-        refresh_image()
-        return
-
-    if e.keycode == 81:
-        grid.turn_left()
-        refresh_image()
-        return
-
-    if e.keycode == 69 or e.keycode == 38 or e.keycode == 87:
-        grid.turn_right()
-        refresh_image()
-        return
-
-    if e.keycode == 40 or e.keycode == 83 or e.keycode == 32:
-        grid.update()
-        refresh_image()
-        return
-    print(e)
-
-
-root.bind('<KeyPress>', on_key_press)
-
-root.after(speed, update)
+root.after(game.speed, update)
 root.mainloop()
