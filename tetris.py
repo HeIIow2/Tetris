@@ -45,6 +45,20 @@ class Figure:
 
         self.update_y()
 
+    def get_pieces(self):
+        pieces = []
+
+        for y, row in enumerate(self.grid):
+            for x, cell in enumerate(row):
+                if cell is None:
+                    continue
+                if y + self.y < 0:
+                    continue
+
+                pieces.append([x + self.x, y + self.y, cell])
+
+        return pieces
+
     def randomize_rotation(self):
         for i in range(random.randint(0, 2)):
             self.rotate_right()
@@ -79,11 +93,6 @@ class Figure:
                 temp_grid[j][self.height - i - 1] = self.grid[i][j]
 
         self.grid = temp_grid
-
-    def output(self):
-        for row in self.grid:
-            print(row)
-        print()
 
 
 class Grid:
@@ -144,50 +153,22 @@ class Grid:
         return True
 
     def update(self):
+        to_pop = []
         for i, figure in enumerate(self.figures):
             figure.y += 1
             if not self.is_placeable(figure):
+                print(f"{i} is not placeable")
+                # append figure to grid and delete
                 figure.y -= 1
-                self.to_pop.append(i)
 
-    def spawn_figure(self, figure: Figure):
-        figure = copy.deepcopy(figure)
-        figure.randomize_rotation()
-        figure.x = random.randint(0, self.grid_width - figure.width)
+                for piece in figure.get_pieces():
+                    x, y, cell = piece
+                    self.grid[y][x] = cell
 
-        self.figures.append(figure)
+                to_pop.append(i)
 
-    def remove_row(self, row_ind:int):
-        self.grid.pop(row_ind)
-        self.grid.insert(0, copy.deepcopy(self.grid[0]))
-
-    def draw(self, width: int, height: int, spacing: int):
-        temp_grid = copy.deepcopy(self.grid)
-        for n, fig in enumerate(self.figures):
-            x = fig.x
-            y = fig.y
-
-            f_x = fig.x
-            f_y = fig.y
-
-            for i, row in enumerate(fig.grid):
-                for j, cell in enumerate(row):
-                    if cell is None:
-                        continue
-                    if f_y + i < 0:
-                        continue
-
-                    if n in self.to_pop:
-                        cell.falling = False
-                        self.grid[f_y + i][f_x + j] = cell
-                        temp_grid[f_y + i][f_x + j] = cell
-                    else:
-                        temp_grid[f_y + i][f_x + j] = cell
-
-            if n in self.to_pop:
-                self.figures.pop(n)
-
-        self.to_pop = []
+        for i in to_pop:
+            self.figures.pop(i)
 
         # wenn in der obersten Zeile ein block ist, game over
         first_row = self.grid[0]
@@ -210,6 +191,26 @@ class Grid:
 
         if number_of_full_row:
             print(f"removed {number_of_full_row} rows in one cycle")
+
+        return number_of_full_row
+
+    def spawn_figure(self, figure: Figure):
+        figure = copy.deepcopy(figure)
+        figure.randomize_rotation()
+        figure.x = random.randint(0, self.grid_width - figure.width)
+
+        self.figures.append(figure)
+
+    def remove_row(self, row_ind: int):
+        self.grid.pop(row_ind)
+        self.grid.insert(0, copy.deepcopy(self.grid[0]))
+
+    def draw(self, width: int, height: int, spacing: int):
+        temp_grid = copy.deepcopy(self.grid)
+
+        for figure in self.figures:
+            for x, y, cell in figure.get_pieces():
+                temp_grid[y][x] = cell
 
         img_width = width * self.grid_width + spacing * (self.grid_width + 1)
         img_height = height * self.grid_height + spacing * (self.grid_height + 1)
@@ -280,6 +281,7 @@ grid = Grid(15, 20)
 
 queue_ = []
 
+
 def refresh_image():
     global img
     img = ImageTk.PhotoImage(grid.draw(20, 20, 1))
@@ -290,6 +292,7 @@ refresh_image()
 label.pack()
 
 cycle = 0
+
 
 def refill_queue():
     global queue_
