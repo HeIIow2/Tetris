@@ -266,8 +266,23 @@ class Grid:
         return len(self.figures) == 0
 
 
+class Description:
+    def __init__(self, root, elements: list):
+        self.elements = {}
+        for i, element in enumerate(elements):
+            self.elements[element] = tkinter.Label(root, text=f"{element}: ")
+            self.elements[element].grid(row=i, column=0)
+
+    def set_element(self, element, value):
+        if element not in self.elements:
+            return
+
+        self.elements[element].config(text=f"{element}: {value}")
+
+
 class Game:
-    def __init__(self, ui_frame, width=10, height=20, level=1, start_speed=800, start_score=0, level_cap=20):
+    def __init__(self, ui_frame, queue_len=5, width=10, height=20, level=1, start_speed=800, start_score=0, level_cap=20):
+        self.queue_len = queue_len
         self.cycle = 0
 
         self.grid = Grid(width=width, height=height)
@@ -278,7 +293,11 @@ class Game:
         self.img_label = tkinter.Label(self.ui_frame)
         self.img = None
         self.render()
-        self.img_label.pack()
+        self.img_label.grid(row=0, column=0)
+
+        self.description_frame = tk.Frame(root)
+        self.description = Description(self.description_frame, ["level", "score", "speed", "rows"])
+        self.description_frame.grid(row=0, column=1)
 
         self.score = start_score
         self.level = level
@@ -321,6 +340,8 @@ class Game:
         if max_level == -1:
             self.speed = speed_
 
+        self.description.set_element("speed", self.speed)
+
     def get_score(self, broken_rows: int):
         # https://tetris.fandom.com/wiki/Scoring
 
@@ -340,6 +361,7 @@ class Game:
         if self.broken_lines >= required_lines:
             self.broken_lines -= required_lines
             self.level += 1
+            self.description.set_element("level", self.level)
             self.set_speed()
 
     def get_next_piece(self):
@@ -401,6 +423,8 @@ class Game:
             self.update_level()
 
         self.score += self.get_score(full_rows) + continuous_soft_drop
+        self.description.set_element("score",self.score)
+        self.description.set_element("rows",self.broken_lines)
 
         if self.grid.allow_spawn():
             self.grid.spawn_figure(self.get_next_piece())
