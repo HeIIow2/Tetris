@@ -34,6 +34,8 @@ class Figure:
         self.height = size
         self.mode = mode
 
+        self.soft_drop = 0
+
         self.grid = []
         for i, elem in enumerate(matrix):
             if i % self.width == 0:
@@ -153,14 +155,20 @@ class Grid:
 
         return True
 
-    def update(self):
+    def update(self, soft_drop=False):
+        continuous_soft_drop = 0
         to_pop = []
         for i, figure in enumerate(self.figures):
+            if soft_drop:
+                figure.soft_drop += 1
+            else:
+                figure.soft_drop = 0
             figure.y += 1
             if not self.is_placeable(figure):
                 print(f"{i} is not placeable")
                 # append figure to grid and delete
                 figure.y -= 1
+                continuous_soft_drop += figure.soft_drop
 
                 for piece in figure.get_pieces():
                     x, y, cell = piece
@@ -190,10 +198,7 @@ class Grid:
                 number_of_full_row += 1
                 self.remove_row(i)
 
-        if number_of_full_row:
-            print(f"removed {number_of_full_row} rows in one cycle")
-
-        return number_of_full_row
+        return number_of_full_row, continuous_soft_drop
 
     def spawn_figure(self, figure: Figure):
         figure = copy.deepcopy(figure)
@@ -262,7 +267,7 @@ class Grid:
 
 
 class Game:
-    def __init__(self, ui_frame, width=10, height=20, level=0, start_speed=800):
+    def __init__(self, ui_frame, width=10, height=20, level=0, start_speed=800, start_score=0):
         self.cycle = 0
 
         self.grid = Grid(width=width, height=height)
@@ -275,6 +280,7 @@ class Game:
         self.render()
         self.img_label.pack()
 
+        self.score = start_score
         self.level = level
         self.speed = start_speed
 
@@ -311,6 +317,13 @@ class Game:
 
         if max_level == -1:
             self.speed = speed_
+
+    def get_score(self, broken_rows:int):
+        # https://tetris.fandom.com/wiki/Scoring
+
+        POINTS = [0, 40, 100, 300, 1200]
+
+        return POINTS[broken_rows]*(self.level+1)
 
     def get_next_piece(self):
         # https://gaming.stackexchange.com/questions/13057/tetris-difficulty#13129
@@ -354,7 +367,7 @@ class Game:
             return
 
         if e.keycode == 40 or e.keycode == 83 or e.keycode == 32:
-            self.grid.update()
+            self.update(soft_drop=True)
             self.render()
             return
 
@@ -362,15 +375,16 @@ class Game:
         self.img = ImageTk.PhotoImage(self.grid.draw(20, 20, 1))
         self.img_label.config(image=self.img)
 
-    def update(self):
-        print(f"cycle {self.cycle}")
-
-        full_rows = self.grid.update()
+    def update(self, soft_drop=False):
+        full_rows, continuous_soft_drop = self.grid.update(soft_drop=soft_drop)
         self.render()
+
+        self.score += self.get_score(full_rows) + continuous_soft_drop
 
         if self.grid.allow_spawn():
             self.grid.spawn_figure(self.get_next_piece())
 
+        print(f"cycle: {self.cycle}; score: {self.score}; level: {self.level}; speed: {self.speed}")
         self.cycle += 1
 
 
