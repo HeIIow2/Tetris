@@ -129,7 +129,6 @@ class Figure:
         return img
 
 
-
 class Grid:
     def __init__(self, width: int, height: int):
         self.figures = []
@@ -197,7 +196,6 @@ class Grid:
                 figure.soft_drop = 0
             figure.y += 1
             if not self.is_placeable(figure):
-                print(f"{i} is not placeable")
                 # append figure to grid and delete
                 figure.y -= 1
                 continuous_soft_drop += figure.soft_drop
