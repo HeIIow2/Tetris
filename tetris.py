@@ -267,7 +267,7 @@ class Grid:
 
 
 class Game:
-    def __init__(self, ui_frame, width=10, height=20, level=0, start_speed=800, start_score=0):
+    def __init__(self, ui_frame, width=10, height=20, level=1, start_speed=800, start_score=0, level_cap=20):
         self.cycle = 0
 
         self.grid = Grid(width=width, height=height)
@@ -282,9 +282,11 @@ class Game:
 
         self.score = start_score
         self.level = level
+        self.level_cap = level_cap
         self.speed = start_speed
 
         self.prev_piece_ind = -1
+        self.broken_lines = 0
 
     def set_speed(self):
         # https://gaming.stackexchange.com/questions/13057/tetris-difficulty#13129
@@ -314,16 +316,31 @@ class Game:
         for min_level, max_level, speed_ in SPEEDS:
             if min_level <= self.level <= max_level:
                 self.speed = speed_
+                break
 
         if max_level == -1:
             self.speed = speed_
 
-    def get_score(self, broken_rows:int):
+    def get_score(self, broken_rows: int):
         # https://tetris.fandom.com/wiki/Scoring
 
         POINTS = [0, 40, 100, 300, 1200]
 
-        return POINTS[broken_rows]*(self.level+1)
+        return POINTS[broken_rows]*self.level
+
+    def update_level(self):
+        # https://gaming.stackexchange.com/questions/379636/how-does-the-leveling-system-on-tetris-work
+
+        level = self.level
+        if level > self.level_cap:
+            level = self.level_cap
+        required_lines = level * 10
+        print(f"update level {required_lines}, {self.broken_lines}")
+
+        if self.broken_lines >= required_lines:
+            self.broken_lines -= required_lines
+            self.level += 1
+            self.set_speed()
 
     def get_next_piece(self):
         # https://gaming.stackexchange.com/questions/13057/tetris-difficulty#13129
@@ -378,6 +395,10 @@ class Game:
     def update(self, soft_drop=False):
         full_rows, continuous_soft_drop = self.grid.update(soft_drop=soft_drop)
         self.render()
+
+        if full_rows:
+            self.broken_lines += full_rows
+            self.update_level()
 
         self.score += self.get_score(full_rows) + continuous_soft_drop
 
