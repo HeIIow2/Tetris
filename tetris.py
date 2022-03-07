@@ -414,6 +414,7 @@ class Game:
         self.description_frame.grid(row=1, column=2)
 
         self.game_over = False
+        self.pause = False
 
         self.score = start_score
         self.level = level
@@ -430,6 +431,7 @@ class Game:
         self.status_label.config(text="Level: 1")
 
         self.description.set_element("score", self.score)
+        self.description.set_element("level", self.level)
         self.update_level()
 
     def set_speed(self):
@@ -488,10 +490,19 @@ class Game:
             self.broken_lines -= required_lines
             self.level += 1
             self.description.set_element("level", self.level)
-            self.status_label.config(text=f"Level: {level}")
+            self.status_label.config(text=f"Level: {self.level}")
             self.set_speed()
 
     def on_key_press(self, e):
+        if self.pause:
+            self.pause = False
+            self.status_label.config(text=f"Level: {self.level}")
+            self.update()
+        elif e.keycode == 27:
+            self.pause = True
+            self.status_label.config(text=f"Pause")
+            return
+    
         if self.game_over:
             self.update(resume=True)
 
@@ -528,6 +539,16 @@ class Game:
         self.queue_label.config(image=self.queue_image)
 
     def update(self, resume=False, soft_drop=False):
+        if self.pause:
+            return
+        if not self.ui_frame.focus_get():
+            self.status_label.config(text=f"Pause")
+            
+            while not self.ui_frame.focus_get():
+                self.ui_frame.update()
+            
+            self.status_label.config(text=f"Level: {self.level}")
+            
         if self.game_over:
             if resume:
                 self.grid.reset_grid()
