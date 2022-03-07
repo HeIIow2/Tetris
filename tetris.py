@@ -6,13 +6,14 @@ import random
 
 
 class Cell:
-    def __init__(self, falling_=False, mode=0):
+    def __init__(self, falling_=False, mode=0, ghost=False):
         self.falling = falling_
         self.mode = mode
-        self.ghost = False
+        self.ghost = ghost
 
     def draw(self, width: int, height: int):
         colors = ["#000", "#2f96af", "#2f44af", "#af6d2f", "#afaf2f", "#3caf2f", "#962faf", "#af2f2f"]
+        
         """
         stick
         blue bend
@@ -22,6 +23,16 @@ class Cell:
         crossing
         right up
         """
+        if self.ghost:
+            color = str(colors[self.mode])[1:]
+            
+            color_list = []
+            color_str="#"
+            for i in range(3):
+                new_thing = int(color[i*2:i*2+2],16)
+                new_thing = int(new_thing / 2)
+                color_str+=hex(new_thing).rstrip("L").lstrip("0x").zfill(2)
+            return Image.new("RGB", (width, height), color=color_str)
 
         return Image.new("RGB", (width, height), color=colors[self.mode])
 
@@ -293,9 +304,8 @@ class Grid:
                     min_ghost = i-1
                     
             for x, y, cell in figure.get_pieces():
-                temp_grid[y][x] = copy.copy(cell)
-                cell.ghost=True
-                temp_grid[y+min_ghost][x] = cell
+                temp_grid[y][x] = cell
+                temp_grid[y+min_ghost][x] = Cell(mode=cell.mode, ghost=True)
 
         img_width = width * self.grid_width + spacing * (self.grid_width + 1)
         img_height = height * self.grid_height + spacing * (self.grid_height + 1)
