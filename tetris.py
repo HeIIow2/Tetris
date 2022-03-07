@@ -9,6 +9,7 @@ class Cell:
     def __init__(self, falling_=False, mode=0):
         self.falling = falling_
         self.mode = mode
+        self.ghost = False
 
     def draw(self, width: int, height: int):
         colors = ["#000", "#2f96af", "#2f44af", "#af6d2f", "#afaf2f", "#3caf2f", "#962faf", "#af2f2f"]
@@ -96,6 +97,18 @@ class Figure:
                 temp_grid[j][self.height - i - 1] = self.grid[i][j]
 
         self.grid = temp_grid
+
+    def get_lower_bounds(self):
+        lower_bounds = []
+        for x in range(self.width):
+            for y, row in reversed(list(enumerate(self.grid))):
+                if row[x] is None:
+                    continue
+                cell = copy.deepcopy(row[x])
+                cell.ghost = True
+                lower_bounds.append((self.x + x, self.y + y, cell))
+                break
+        return lower_bounds
 
     def draw(self, grid_width: int, width: int, height: int, spacing: int):
         img_width = width * grid_width + spacing * (grid_width + 1)
@@ -270,8 +283,19 @@ class Grid:
         temp_grid = copy.deepcopy(self.grid)
 
         for figure in self.figures:
+                
+            min_ghost = 382921
+            for x, y, cell in figure.get_lower_bounds():
+                i=0
+                while not self.is_occupied(x, y+i):
+                    i+=1
+                if i-1 < min_ghost:
+                    min_ghost = i-1
+                    
             for x, y, cell in figure.get_pieces():
-                temp_grid[y][x] = cell
+                temp_grid[y][x] = copy.copy(cell)
+                cell.ghost=True
+                temp_grid[y+min_ghost][x] = cell
 
         img_width = width * self.grid_width + spacing * (self.grid_width + 1)
         img_height = height * self.grid_height + spacing * (self.grid_height + 1)
