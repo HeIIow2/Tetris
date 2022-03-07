@@ -181,6 +181,22 @@ class Grid:
 
         return False
 
+    def occupies(self, fig: Figure):
+        f_x = fig.x
+        f_y = fig.y
+        
+        occupied_fields = 0
+
+        for i, row in enumerate(fig.grid):
+            for j, cell in enumerate(row):
+                if cell is None:
+                    continue
+
+                if self.is_occupied(f_x + j, f_y + i):
+                    occupied_fields += 1
+
+        return occupied_fields
+
     def is_placeable(self, fig: Figure):
         f_x = fig.x
         f_y = fig.y
@@ -285,21 +301,64 @@ class Grid:
                 figure.x += 1
 
     def move_in_bounds(self, index: int):
-        while not self.is_placeable(self.figures[index]):
-            if self.figures[index].x < 0:
-                self.figures[index].x += 1
+        # self.is_placeable(self.figures[index])
+        original_occupation = self.occupies(self.figures[index])
+        if not original_occupation:
+            return True
+            
+        moving_x = 0
+        moving_y = 0
+        
+        self.figures[index].x += 1
+        current_occupies = self.occupies(self.figures[index])
+        if not current_occupies:
+            return True
+        if current_occupies < original_occupation:
+            moving_x = 1
+        else:
+            self.figures[index].x -= 2
+            current_occupies = self.occupies(self.figures[index])
+            if not current_occupies:
+                return True
+            if current_occupies < original_occupation:
+                moving_x = -1
             else:
-                self.figures[index].x -= 1
+                self.figures[index].x += 1
+                self.figures[index].y -= 1
+                moving_x = 0
+                moving_y = -1
+                current_occupies = self.occupies(self.figures[index])
+                if not current_occupies:
+                    return True
+                if not current_occupies < original_occupation:
+                    self.figures[index].y += 1
+                    return False
+                   
+        m = 0
+        threshold = 3
+        while not self.is_placeable(self.figures[index]):
+            self.figures[index].x += moving_x
+            self.figures[index].y += moving_y
+            if m > threshold:
+                self.figures[index].x -= moving_x * threshold
+                self.figures[index].y -= moving_y * threshold
+                return False
+            m += 1
+                   
+        return True
+        
 
     def turn_right(self):
         for i in range(len(self.figures)):
             self.figures[i].rotate_right()
-            self.move_in_bounds(i)
+            if not self.move_in_bounds(i):
+                self.figures[i].rotate_left()
 
     def turn_left(self):
         for i in range(len(self.figures)):
             self.figures[i].rotate_left()
-            self.move_in_bounds(i)
+            if not self.move_in_bounds(i):
+                self.figures[i].rotate_right()
 
     def allow_spawn(self):
         return len(self.figures) == 0
@@ -482,6 +541,7 @@ class Game:
         level = self.level
         if level > self.level_cap:
             level = self.level_cap
+            self.description.set_element("rows", f"{self.broken_lines}/inf")
         required_lines = level * 10
 
         self.description.set_element("rows", f"{self.broken_lines}/{required_lines}")
@@ -492,6 +552,9 @@ class Game:
             self.description.set_element("level", self.level)
             self.status_label.config(text=f"Level: {self.level}")
             self.set_speed()
+            
+        required_lines = self.level * 10
+        self.description.set_element("rows", f"{self.broken_lines}/{required_lines}")
 
     def on_key_press(self, e):
         if self.pause:
