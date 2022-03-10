@@ -4,7 +4,6 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import random
 
-# main game mechanics
 
 class Cell:
     def __init__(self, falling_=False, mode=0, ghost=False):
