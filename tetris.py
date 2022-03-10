@@ -175,6 +175,8 @@ class Grid:
         self.grid_height = height
 
         self.grid = []
+        # saving the cell of the first piece you encounter going from the top for each collumn
+        self.lowest_frees = [self.grid_height-1]*self.grid_width
 
         for i in range(height):
             row = []
@@ -184,6 +186,7 @@ class Grid:
 
     def reset_grid(self):
         self.grid = []
+        self.lowest_frees = [self.grid_height-1]*self.grid_width
 
         for i in range(self.grid_height):
             row = []
@@ -266,6 +269,10 @@ class Grid:
                 for piece in figure.get_pieces():
                     x, y, cell = piece
                     self.grid[y][x] = cell
+                    
+                    # the -1 is because not the full cell is needet, but the empty one above
+                    if self.lowest_frees[x] > y-1:
+                        self.lowest_frees[x] = y-1
 
                 to_pop.append(i)
 
@@ -274,6 +281,7 @@ class Grid:
 
         # Wenn eine Zeile voll ist, lösche diese
         number_of_full_row = 0
+        deleted_some_rows = False
         for i, row in enumerate(self.grid):
             is_full = True
             for cell in row:
@@ -281,8 +289,19 @@ class Grid:
                     is_full = False
 
             if is_full:
+                deleted_some_rows = True
                 number_of_full_row += 1
                 self.remove_row(i)
+                
+        if deleted_some_rows:
+            # wenn reihen zerstört wurden müssen auch die upper bounds geupdated werden
+            for x in range(self.grid_width):
+                for y in range(self.grid_height):
+                    if self.grid[y][x].mode != 0:
+                        self.lowest_frees[x] = y-1
+                        break
+                else:
+                    self.lowest_frees[x] = y
 
         # wenn in der obersten Zeile ein block ist, game over
         first_row = self.grid[0]
@@ -311,11 +330,8 @@ class Grid:
                 
             min_ghost = 382921
             for x, y, cell in figure.get_lower_bounds():
-                i=0
-                while not self.is_occupied(x, y+i):
-                    i+=1
-                if i-1 < min_ghost:
-                    min_ghost = i-1
+                if self.lowest_frees[x]-y < min_ghost:
+                    min_ghost = self.lowest_frees[x]-y
                     
             for x, y, cell in figure.get_pieces():
                 temp_grid[y][x] = cell
