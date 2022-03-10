@@ -329,10 +329,13 @@ class Grid:
             for x, y, cell in figure.get_lower_bounds():
                 if self.lowest_frees[x]-y < min_ghost:
                     min_ghost = self.lowest_frees[x]-y
-                    
+            
             for x, y, cell in figure.get_pieces():
                 temp_grid[y][x] = cell
-                temp_grid[y+min_ghost][x] = Cell(mode=cell.mode, ghost=True)
+                # if the block is drawn under another one it wont work
+                # so in that case we ignore it and dont draw it because the likelyhood is small.
+                if min_ghost > 0:
+                    temp_grid[y+min_ghost][x] = Cell(mode=cell.mode, ghost=True)
 
         img_width = width * self.grid_width + spacing * (self.grid_width + 1)
         img_height = height * self.grid_height + spacing * (self.grid_height + 1)
