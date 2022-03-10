@@ -49,6 +49,8 @@ class Figure:
         self.soft_drop = 0
 
         self.grid = []
+        self.lower_bounds = []
+        
         for i, elem in enumerate(matrix):
             if i % self.width == 0:
                 self.grid.append([])
@@ -59,6 +61,7 @@ class Figure:
                 self.grid[-1].append(None)
 
         self.update_y()
+        self.update_lower_bounds()
 
     def get_pieces(self):
         pieces = []
@@ -99,6 +102,8 @@ class Figure:
                 temp_grid[self.width - j - 1][i] = self.grid[i][j]
 
         self.grid = temp_grid
+        
+        self.update_lower_bounds()
 
     def rotate_right(self):
         temp_grid = copy.deepcopy(self.grid)
@@ -108,17 +113,26 @@ class Figure:
                 temp_grid[j][self.height - i - 1] = self.grid[i][j]
 
         self.grid = temp_grid
+        
+        self.update_lower_bounds()
 
-    def get_lower_bounds(self):
-        lower_bounds = []
+    def update_lower_bounds(self):
+        self.lower_bounds = []
         for x in range(self.width):
             for y, row in reversed(list(enumerate(self.grid))):
                 if row[x] is None:
                     continue
                 cell = copy.deepcopy(row[x])
                 cell.ghost = True
-                lower_bounds.append((self.x + x, self.y + y, cell))
+                self.lower_bounds.append((x, y, cell))
                 break
+
+    def get_lower_bounds(self):
+        lower_bounds = []
+        
+        for x, y, cell in self.lower_bounds:
+            lower_bounds.append((self.x + x, self.y + y, cell))
+    
         return lower_bounds
 
     def draw(self, grid_width: int, width: int, height: int, spacing: int):
