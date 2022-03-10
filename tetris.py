@@ -328,7 +328,7 @@ class Grid:
 
         for figure in self.figures:
                 
-            min_ghost = 382921
+            min_ghost = self.grid_height
             for x, y, cell in figure.get_lower_bounds():
                 if self.lowest_frees[x]-y < min_ghost:
                     min_ghost = self.lowest_frees[x]-y
