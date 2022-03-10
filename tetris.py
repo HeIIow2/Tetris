@@ -239,15 +239,12 @@ class Grid:
         return occupied_fields
 
     def is_placeable(self, fig: Figure):
-        f_x = fig.x
-        f_y = fig.y
-
         for i, row in enumerate(fig.grid):
             for j, cell in enumerate(row):
                 if cell is None:
                     continue
 
-                if self.is_occupied(f_x + j, f_y + i):
+                if self.is_occupied(fig.x + j, fig.y + i):
                     return False
 
         return True
@@ -409,8 +406,7 @@ class Grid:
                 return False
             m += 1
                    
-        return True
-        
+        return True        
 
     def turn_right(self):
         for i in range(len(self.figures)):
