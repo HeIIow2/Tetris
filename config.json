@@ -1,8 +1,9 @@
 {
 	"grid_width": 10,
-	"grid_heigth": 20,
+	"grid_height": 20,
 	"queue_len": 5,
-	"start_level": 1,
+	"start_level": 5,
+	"level_cap": 20,
 	"figures": 
 	[
 		[
@@ -39,6 +40,13 @@
 			[1, 1, 0],
 			[0, 1, 1],
 			[0, 0, 0]
+		],
+		[
+			[1]
+		],
+		[
+			[1, 1],
+			[0, 1]
 		]
 	]
 }

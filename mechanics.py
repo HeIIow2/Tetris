@@ -7,13 +7,28 @@ import random
 
 class Cell:
     def __init__(self, falling_=False, mode=0, ghost=False):
+        #self.colors = ["#000", "#2f96af", "#2f44af", "#af6d2f", "#afaf2f", "#3caf2f", "#962faf", "#af2f2f"]
+        colors = [
+            (0, 0, 0),
+            (47, 150, 175),
+            (47, 68, 175),
+            (175, 109, 47),
+            (175, 175, 47),
+            (60, 175, 47),
+            (150, 47, 175),
+            (175, 47, 47)
+        ]
         self.falling = falling_
-        self.mode = mode
+        if mode:
+            mode -= 1
+            self.mode = mode%(len(colors)-1)
+            self.mode += 1
+        else:
+            self.mode = mode
+        self.color = colors[self.mode]
         self.ghost = ghost
 
     def draw(self, width: int, height: int):
-        colors = ["#000", "#2f96af", "#2f44af", "#af6d2f", "#afaf2f", "#3caf2f", "#962faf", "#af2f2f"]
-        
         """
         stick
         blue bend
@@ -23,18 +38,13 @@ class Cell:
         crossing
         right up
         """
+        
         if self.ghost:
-            color = str(colors[self.mode])[1:]
-            
-            color_list = []
-            color_str="#"
-            for i in range(3):
-                new_thing = int(color[i*2:i*2+2],16)
-                new_thing = int(new_thing / 2)
-                color_str+=hex(new_thing).rstrip("L").lstrip("0x").zfill(2)
-            return Image.new("RGB", (width, height), color=color_str)
+            _color = (int(self.color[0]/2), int(self.color[1]/2), int(self.color[2]/2))
+        else:
+            _color = tuple(self.color)
 
-        return Image.new("RGB", (width, height), color=colors[self.mode])
+        return Image.new("RGB", (width, height), color='#%02x%02x%02x' % _color)
 
 
 class Figure:
@@ -443,8 +453,11 @@ class Description:
 
 
 class Queue:
-    def __init__(self, length: int, height: int, width: int):
+    def __init__(self, figures: list, length: int, height: int, width: int):
         self.grid = []
+        self.FIGURES = []
+        for i, figure in enumerate(figures):
+            self.FIGURES.append(Figure(figure[0], figure[1:], mode=i+1))
 
         self.grid_height = height
         self.grid_width = width
@@ -463,7 +476,8 @@ class Queue:
 
     def get_random_piece(self):
         # https://gaming.stackexchange.com/questions/13057/tetris-difficulty#13129
-
+        
+        """
         FIGURES = [
             Figure(4, [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0], 1),
             Figure(3, [1, 0, 0, 1, 1, 1, 0, 0, 0], 2),
@@ -472,14 +486,14 @@ class Queue:
             Figure(3, [0, 1, 1, 1, 1, 0, 0, 0, 0], 5),
             Figure(3, [0, 1, 0, 1, 1, 1, 0, 0, 0], 6),
             Figure(3, [1, 1, 0, 0, 1, 1, 0, 0, 0], 7),
-        ]
+        ]"""
 
-        random_number = random.randint(0, 7)
-        if random_number == self.prev_piece_ind or random_number == 7:
-            random_number = random.randint(0, 6)
+        random_number = random.randint(0, len(self.FIGURES))
+        if random_number == self.prev_piece_ind or random_number == len(self.FIGURES):
+            random_number = random.randint(0, len(self.FIGURES)-1)
 
         self.prev_piece_ind = random_number
-        return FIGURES[random_number]
+        return self.FIGURES[random_number]
 
     def next_piece(self):
         next_piece_ = self.queue[0]
@@ -508,12 +522,13 @@ class Queue:
 
 
 class Game:
-    def __init__(self, ui_frame, queue_len=5, width=10, height=20, level=1, start_speed=800, start_score=0, level_cap=20):
+    def __init__(self, ui_frame, figures: list, queue_len=5, width=10, height=20, level=1, start_speed=800, start_score=0, level_cap=20):
         self.queue_len = queue_len
         self.cycle = 0
 
         self.grid = Grid(width=width, height=height)
-        self.queue = Queue(queue_len, width=4, height=height)
+        print(figures)
+        self.queue = Queue(length=queue_len, figures=figures, width=4, height=height)
 
         self.ui_frame = ui_frame
         self.ui_frame.bind('<KeyPress>', self.on_key_press)
@@ -542,6 +557,8 @@ class Game:
         self.level = level
         self.level_cap = level_cap
         self.speed = start_speed
+        
+        self.set_speed()
 
         self.broken_lines = 0
 
