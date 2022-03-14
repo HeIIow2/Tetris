@@ -1,6 +1,8 @@
+import game as gm
+import save_binary
+
 import tkinter as tk
 import json
-import game as gm
 
 with open("config.json", "r") as config_file:
     config_data = json.loads(config_file.read())
@@ -46,6 +48,8 @@ last_run = True
 
 def on_pause():
     print("paused")
+
+    save_binary.save_grid(game.grid)
 
 def on_resume():
     print("resumed")
