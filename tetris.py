@@ -42,9 +42,24 @@ root = tk.Tk()
 root.title("Tetris")
 
 game = gm.Game(root, figures, width=grid_width, height=grid_height, queue_width=max_width, queue_len=queue_len, level=start_level, level_cap=level_cap)
+last_run = True
+
+def on_pause():
+    print("paused")
+
+def on_resume():
+    print("resumed")
 
 def update():
-    game.update()
+    global last_run
+
+    current_run = game.update()
+    if last_run and not current_run:
+        on_pause()
+    elif not last_run and current_run:
+        on_resume()
+
+    last_run = current_run
     root.after(game.speed, update)
 
 

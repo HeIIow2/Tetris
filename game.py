@@ -1,8 +1,8 @@
 import grid as gd
 import queue as qe
 import description as dp
-import tkinter
 
+import tkinter
 from PIL import ImageTk
 
 class Game:
@@ -169,8 +169,10 @@ class Game:
         self.queue_label.config(image=self.queue_image)
 
     def update(self, resume=False, soft_drop=False, hard_drop=False):
+        doesnt_run = False
+
         if self.pause:
-            return
+            return doesnt_run
         if not self.ui_frame.focus_get():
             self.status_label.config(text=f"Pause")
             
@@ -185,7 +187,7 @@ class Game:
                 self.reset_level()
                 self.game_over = True
             else:
-                return
+                return doesnt_run
 
         full_rows, continuous_soft_drop, self.game_over, hard_drop = self.grid.update(soft_drop=soft_drop, hard_drop=hard_drop)
         self.render()
@@ -205,6 +207,8 @@ class Game:
 
         if self.game_over:
             self.status_label.config(text="Game Over")
-            return
+            return doesnt_run
 
         self.cycle += 1
+
+        return True
