@@ -13,10 +13,12 @@ class Queue:
         self.grid_height = height
         self.grid_width = width
 
+        self.empty_cell = cl.Cell()
+
         for i in range(height):
             row = []
             for j in range(width):
-                row.append(cl.Cell())
+                row.append(self.empty_cell)
             self.grid.append(row)
 
         self.prev_piece_ind = -1

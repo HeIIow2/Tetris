@@ -14,17 +14,17 @@ class Cell:
             (190, 71, 214),
             (71, 214, 191)
         ]
-        self.falling = falling_
         if mode:
             mode -= 1
             self.mode = mode%(len(colors)-1)
             self.mode += 1
         else:
             self.mode = mode
-        self.color = colors[self.mode]
+        self.primary_color = colors[self.mode]
+        self.secondary_color = (int(self.primary_color[0]/2), int(self.primary_color[1]/2), int(self.primary_color[2]/2))
         self.ghost = ghost
 
-    def draw(self, width: int, height: int):
+    def draw(self, width: int, height: int, ghost=False):
         """
         stick
         blue bend
@@ -35,9 +35,7 @@ class Cell:
         right up
         """
         
-        if self.ghost:
-            _color = (int(self.color[0]/2), int(self.color[1]/2), int(self.color[2]/2))
-        else:
-            _color = tuple(self.color)
+        if not self.ghost:
+            return Image.new("RGB", (width, height), color='#%02x%02x%02x' % self.primary_color)
 
-        return Image.new("RGB", (width, height), color='#%02x%02x%02x' % _color)
+        return Image.new("RGB", (width, height), color='#%02x%02x%02x' % self.secondary_color)

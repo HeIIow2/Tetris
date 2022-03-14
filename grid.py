@@ -11,6 +11,8 @@ class Grid:
         self.grid_width = width
         self.grid_height = height
 
+        self.empty_cell = cl.Cell()
+
         self.grid = []
         # saving the cell of the first piece you encounter going from the top for each collumn
         self.lowest_frees = [self.grid_height-1]*self.grid_width
@@ -18,7 +20,7 @@ class Grid:
         for i in range(height):
             row = []
             for j in range(width):
-                row.append(cl.Cell())
+                row.append(self.empty_cell)
             self.grid.append(row)
 
     def reset_grid(self):
@@ -28,7 +30,7 @@ class Grid:
         for i in range(self.grid_height):
             row = []
             for j in range(self.grid_width):
-                row.append(cl.Cell())
+                row.append(self.empty_cell)
             self.grid.append(row)
 
     def game_over(self):
@@ -100,8 +102,7 @@ class Grid:
         return min_ghost
 
     def place(self, figure: fg.Figure):
-        for piece in figure.get_pieces():
-                x, y, cell = piece
+        for x, y, cell, ghost_cell in figure.get_pieces():
                 self.grid[y][x] = cell
                     
                 # the -1 is because not the full cell is needet, but the empty one above
@@ -186,12 +187,12 @@ class Grid:
                 
             min_ghost = self.get_min_ghost(figure)
             
-            for x, y, cell in figure.get_pieces():
+            for x, y, cell, ghost_cell in figure.get_pieces():
                 temp_grid[y][x] = cell
                 # if the block is drawn under another one it wont work
                 # so in that case we ignore it and dont draw it because the likelyhood is small.
                 if min_ghost > 0:
-                    temp_grid[y+min_ghost][x] = cl.Cell(mode=cell.mode, ghost=True)
+                    temp_grid[y+min_ghost][x] = ghost_cell
 
         img_width = width * self.grid_width + spacing * (self.grid_width + 1)
         img_height = height * self.grid_height + spacing * (self.grid_height + 1)

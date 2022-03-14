@@ -1,4 +1,4 @@
-import cell
+import cell as cl
 import random
 import copy
 from PIL import Image
@@ -12,6 +12,10 @@ class Figure:
         self.height = size
         self.mode = mode
 
+        self.cell = cl.Cell(mode=mode)
+        self.ghost_cell = cl.Cell(mode=mode, ghost=True)
+        self.emty_cell = cl.Cell()
+
         self.soft_drop = 0
 
         self.grid = []
@@ -22,7 +26,7 @@ class Figure:
                 self.grid.append([])
 
             if bool(elem):
-                self.grid[-1].append(cell.Cell(falling_=True, mode=self.mode))
+                self.grid[-1].append(self.cell)
             else:
                 self.grid[-1].append(None)
 
@@ -39,7 +43,7 @@ class Figure:
                 if y + self.y < 0:
                     continue
 
-                pieces.append([x + self.x, y + self.y, cell])
+                pieces.append([x + self.x, y + self.y, self.cell, self.ghost_cell])
 
         return pieces
 
@@ -89,8 +93,7 @@ class Figure:
                 if row[x] is None:
                     continue
                 cell = copy.deepcopy(row[x])
-                cell.ghost = True
-                self.lower_bounds.append((x, y, cell))
+                self.lower_bounds.append((x, y, self.cell))
                 break
 
     def get_lower_bounds(self):
@@ -114,18 +117,18 @@ class Figure:
         for i in range(self.height):
             x = spacing
             for n in range(margin_left):
-                Image.Image.paste(img, cell.Cell().draw(width, height), (x, y))
+                Image.Image.paste(img, self.emty_cell.draw(width, height), (x, y))
                 x += spacing + width
 
             for j in range(self.width):
                 if self.grid[i][j] is None:
-                    Image.Image.paste(img, cell.Cell().draw(width, height), (x, y))
+                    Image.Image.paste(img, self.emty_cell.draw(width, height), (x, y))
                 else:
                     Image.Image.paste(img, self.grid[i][j].draw(width, height), (x, y))
                 x += spacing + width
 
             for n in range(margin_right):
-                Image.Image.paste(img, cell.Cell().draw(width, height), (x, y))
+                Image.Image.paste(img, self.emty_cell.draw(width, height), (x, y))
                 x += spacing + width
 
             y += spacing + height
