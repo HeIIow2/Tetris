@@ -7,7 +7,6 @@ import random
 
 class Cell:
     def __init__(self, falling_=False, mode=0, ghost=False):
-        #self.colors = ["#000", "#2f96af", "#2f44af", "#af6d2f", "#afaf2f", "#3caf2f", "#962faf", "#af2f2f"]
         colors = [
             (0, 0, 0),
             (47, 150, 175),
@@ -16,7 +15,9 @@ class Cell:
             (175, 175, 47),
             (60, 175, 47),
             (150, 47, 175),
-            (175, 47, 47)
+            (175, 47, 47),
+            (190, 71, 214),
+            (71, 214, 191)
         ]
         self.falling = falling_
         if mode:
@@ -506,10 +507,10 @@ class Queue:
         img_height = 0
         figure_images = []
         for figure in self.queue:
-            figure_images.append(figure.draw(grid_width=4, width=width, height=height, spacing=spacing))
+            figure_images.append(figure.draw(grid_width=self.grid_width, width=width, height=height, spacing=spacing))
             img_height += figure_images[-1].height
 
-        img_width = width * 4 + spacing * (4 + 1)
+        img_width = width * self.grid_width + spacing * (self.grid_width + 1)
 
         img = Image.new("RGB", (img_width, img_height), color="#666")
         current_height = 0
@@ -522,13 +523,12 @@ class Queue:
 
 
 class Game:
-    def __init__(self, ui_frame, figures: list, queue_len=5, width=10, height=20, level=1, start_speed=800, start_score=0, level_cap=20):
+    def __init__(self, ui_frame, figures: list, queue_len=5, queue_width=4, width=10, height=20, level=1, start_speed=800, start_score=0, level_cap=20):
         self.queue_len = queue_len
         self.cycle = 0
 
         self.grid = Grid(width=width, height=height)
-        print(figures)
-        self.queue = Queue(length=queue_len, figures=figures, width=4, height=height)
+        self.queue = Queue(length=queue_len, figures=figures, width=queue_width, height=height)
 
         self.ui_frame = ui_frame
         self.ui_frame.bind('<KeyPress>', self.on_key_press)

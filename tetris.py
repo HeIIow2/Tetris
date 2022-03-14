@@ -12,18 +12,36 @@ with open("config.json", "r") as config_file:
     raw_figures = config_data['figures']
     figures = []
     
+    max_width = 0
     for raw_figure in raw_figures:
+        anything = [0] * len(raw_figure[0])
         figure = [len(raw_figure)]
         for row in raw_figure:
-            for cell in row:
+            for i, cell in enumerate(row):
                 figure.append(cell)
+                anything[i] = anything[i] or cell
+                
+        real_width = len(anything)
+        
+        for cell in anything:
+            if cell:
+                break
+            real_width -= 1
+            
+        for cell in list(reversed(anything)):
+            if cell:
+                break
+            real_width -= 1
+            
+        if real_width > max_width:
+            max_width = real_width
                 
         figures.append(figure)
 
 root = tk.Tk()
 root.title("Tetris")
 
-game = mechanics.Game(root, figures, width=grid_width, height=grid_height, queue_len=queue_len, level=start_level, level_cap=level_cap)
+game = mechanics.Game(root, figures, width=grid_width, height=grid_height, queue_width=max_width, queue_len=queue_len, level=start_level, level_cap=level_cap)
 
 def update():
     game.update()
