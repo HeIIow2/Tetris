@@ -1,8 +1,8 @@
 import tkinter as tk
 import json
-import mechanics
+import game as gm
 
-with open("test_config.json", "r") as config_file:
+with open("config.json", "r") as config_file:
     config_data = json.loads(config_file.read())
     grid_width = config_data['grid_width']
     grid_height = config_data['grid_height']
@@ -41,7 +41,7 @@ with open("test_config.json", "r") as config_file:
 root = tk.Tk()
 root.title("Tetris")
 
-game = mechanics.Game(root, figures, width=grid_width, height=grid_height, queue_width=max_width, queue_len=queue_len, level=start_level, level_cap=level_cap)
+game = gm.Game(root, figures, width=grid_width, height=grid_height, queue_width=max_width, queue_len=queue_len, level=start_level, level_cap=level_cap)
 
 def update():
     game.update()
