@@ -260,10 +260,40 @@ class Grid:
 
         return True
 
-    def update(self, soft_drop=False):
+    def get_min_ghost(self, figure: Figure):
+        min_ghost = self.grid_height
+        for x, y, cell in figure.get_lower_bounds():
+            if self.lowest_frees[x]-y < min_ghost:
+                min_ghost = self.lowest_frees[x]-y
+
+        return min_ghost
+
+    def hard_drop(self, index: int):
+        min_ghost = self.get_min_ghost(self.figures[index])
+        self.figures[index].y += min_ghost
+        return min_ghost
+
+    def place(self, figure: Figure):
+        for piece in figure.get_pieces():
+                x, y, cell = piece
+                self.grid[y][x] = cell
+                    
+                # the -1 is because not the full cell is needet, but the empty one above
+                if self.lowest_frees[x] > y-1:
+                    self.lowest_frees[x] = y-1
+
+        return figure.soft_drop
+
+    def update(self, soft_drop=False, hard_drop=False):
         continuous_soft_drop = 0
+        hard_drop_ = 0
         to_pop = []
         for i, figure in enumerate(self.figures):
+            if hard_drop:
+                hard_drop_ += self.hard_drop(i)
+                self.place(figure)
+                to_pop.append(i)
+                continue
             if soft_drop:
                 figure.soft_drop += 1
             else:
@@ -272,15 +302,7 @@ class Grid:
             if not self.is_placeable(figure):
                 # append figure to grid and delete
                 figure.y -= 1
-                continuous_soft_drop += figure.soft_drop
-
-                for piece in figure.get_pieces():
-                    x, y, cell = piece
-                    self.grid[y][x] = cell
-                    
-                    # the -1 is because not the full cell is needet, but the empty one above
-                    if self.lowest_frees[x] > y-1:
-                        self.lowest_frees[x] = y-1
+                continuous_soft_drop += self.place(figure)
 
                 to_pop.append(i)
 
@@ -318,7 +340,7 @@ class Grid:
             if cell.mode != 0:
                 game_over_ = True
 
-        return number_of_full_row, continuous_soft_drop, game_over_
+        return number_of_full_row, continuous_soft_drop, game_over_, hard_drop_
 
     def spawn_figure(self, figure: Figure):
         figure = copy.deepcopy(figure)
@@ -336,10 +358,7 @@ class Grid:
 
         for figure in self.figures:
                 
-            min_ghost = self.grid_height
-            for x, y, cell in figure.get_lower_bounds():
-                if self.lowest_frees[x]-y < min_ghost:
-                    min_ghost = self.lowest_frees[x]-y
+            min_ghost = self.get_min_ghost(figure)
             
             for x, y, cell in figure.get_pieces():
                 temp_grid[y][x] = cell
@@ -669,8 +688,12 @@ class Game:
             self.render()
             return
 
-        if e.keycode == 40 or e.keycode == 83 or e.keycode == 32:
+        if e.keycode == 40 or e.keycode == 83:
             self.update(soft_drop=True)
+            return
+
+        if e.keycode == 32:
+            self.update(hard_drop=True)
             return
 
     def render(self):
@@ -681,7 +704,7 @@ class Game:
         self.queue_image = ImageTk.PhotoImage(self.queue.draw(20, 20, 1))
         self.queue_label.config(image=self.queue_image)
 
-    def update(self, resume=False, soft_drop=False):
+    def update(self, resume=False, soft_drop=False, hard_drop=False):
         if self.pause:
             return
         if not self.ui_frame.focus_get():
@@ -700,14 +723,14 @@ class Game:
             else:
                 return
 
-        full_rows, continuous_soft_drop, self.game_over = self.grid.update(soft_drop=soft_drop)
+        full_rows, continuous_soft_drop, self.game_over, hard_drop = self.grid.update(soft_drop=soft_drop, hard_drop=hard_drop)
         self.render()
 
         if full_rows:
             self.broken_lines += full_rows
             self.update_level()
 
-        self.score += self.get_score(full_rows) + continuous_soft_drop
+        self.score += self.get_score(full_rows) + continuous_soft_drop + hard_drop
         self.description.set_element("score", self.score)
 
         if self.grid.allow_spawn():

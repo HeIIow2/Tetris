@@ -2,7 +2,7 @@ import tkinter as tk
 import json
 import mechanics
 
-with open("config.json", "r") as config_file:
+with open("test_config.json", "r") as config_file:
     config_data = json.loads(config_file.read())
     grid_width = config_data['grid_width']
     grid_height = config_data['grid_height']
