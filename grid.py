@@ -23,6 +23,8 @@ class Grid:
                 row.append(self.empty_cell)
             self.grid.append(row)
 
+        self.temp_grid = None
+
     def reset_grid(self):
         self.grid = []
         self.lowest_frees = [self.grid_height-1]*self.grid_width
@@ -180,20 +182,21 @@ class Grid:
         self.grid.pop(row_ind)
         self.grid.insert(0, copy.deepcopy(self.grid[0]))
 
-    def draw(self, width: int, height: int, spacing: int):
-        temp_grid = copy.deepcopy(self.grid)
+    def get_temp_grid(self):
+        self.temp_grid = copy.deepcopy(self.grid)
 
         for figure in self.figures:
-                
             min_ghost = self.get_min_ghost(figure)
             
             for x, y, cell, ghost_cell in figure.get_pieces():
-                temp_grid[y][x] = cell
+                self.temp_grid[y][x] = cell
                 # if the block is drawn under another one it wont work
                 # so in that case we ignore it and dont draw it because the likelyhood is small.
                 if min_ghost > 0:
-                    temp_grid[y+min_ghost][x] = ghost_cell
+                    self.temp_grid[y+min_ghost][x] = ghost_cell
 
+    def draw(self, width: int, height: int, spacing: int):
+        self.get_temp_grid()
         img_width = width * self.grid_width + spacing * (self.grid_width + 1)
         img_height = height * self.grid_height + spacing * (self.grid_height + 1)
 
@@ -203,7 +206,7 @@ class Grid:
         for i in range(self.grid_height):
             x = spacing
             for j in range(self.grid_width):
-                Image.Image.paste(img, temp_grid[i][j].draw(width, height), (x, y))
+                Image.Image.paste(img, self.temp_grid[i][j].draw(width, height), (x, y))
                 x += spacing + width
             y += spacing + height
 
@@ -282,3 +285,12 @@ class Grid:
 
     def allow_spawn(self):
         return len(self.figures) == 0
+
+    def get_binary(self, BYTES_PER_INT=5):
+        bin_data = self.grid_width.to_bytes(BYTES_PER_INT, 'big')
+        bin_data += self.grid_height.to_bytes(BYTES_PER_INT, 'big')
+        for row in self.temp_grid:
+            for cell in row:
+                bin_data += cell.get_binary(1)
+
+        return bin_data

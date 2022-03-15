@@ -39,3 +39,6 @@ class Cell:
             return Image.new("RGB", (width, height), color='#%02x%02x%02x' % self.primary_color)
 
         return Image.new("RGB", (width, height), color='#%02x%02x%02x' % self.secondary_color)
+
+    def get_binary(self, BYTES_PER_INT=1):
+        return self.mode.to_bytes(BYTES_PER_INT, 'big')

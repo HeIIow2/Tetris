@@ -1,5 +1,6 @@
 import grid as gd
 import game as gm
+import cycle as cl
 
 import os
 import time
@@ -8,7 +9,7 @@ import json
 
 
 class Folders:
-    def __init__(self, directory=None):
+    def __init__(self, directory=None, use_default=False):
         if directory is None:
             BASE_DIR = os.getenv('APPDATA')
         else:
@@ -40,7 +41,7 @@ class Folders:
         self.level_cap = 20
         self.raw_figures = [[[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], [[1, 0, 0], [1, 1, 1], [0, 0, 0]], [[0, 0, 1], [1, 1, 1], [0, 0, 0]], [[1, 1], [1, 1]], [[0, 1, 1], [1, 1, 0], [0, 0, 0]], [[0, 1, 0], [1, 1, 1], [0, 0, 0]], [[1, 1, 0], [0, 1, 1]]]
 
-        if self.config is not None:
+        if self.config is not None and not use_default:
             self.grid_width = self.config["grid_width"]
             self.grid_height = self.config["grid_height"]
             self.queue_len = self.config["queue_len"]
@@ -79,6 +80,9 @@ class Folders:
             self.data = []
             self.creation_time = time.time()
 
+        self.game = None
+        self.cycle = None
+
     def read_config_file(self):
         with open(self.CONFIG_PATH, "r") as config_file:
             self.config = json.load(config_file)
@@ -102,10 +106,13 @@ class Folders:
             config_file.write(r.content)
 
     def get_game(self, root):
-        return gm.Game(root, self.figures, width=self.grid_width, height=self.grid_height, queue_width=self.max_width, queue_len=self.queue_len, level=self.start_level, level_cap=self.level_cap)
+        if self.game is None:
+            self.game = gm.Game(root, self.figures, width=self.grid_width, height=self.grid_height, queue_width=self.max_width, queue_len=self.queue_len, level=self.start_level, level_cap=self.level_cap)
+            self.cycle = cl.Cycle(self.game)
+        return self.game
 
-    def save_grid(self, grid: gd.Grid):
-        current_time = time.time() - self.creation_time
+    def save_grid(self):
+        print(self.cycle.get_cycle())
 
 
 if __name__ == "__main__":

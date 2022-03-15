@@ -11,17 +11,24 @@ folders = fd.Folders()
 game = folders.get_game(root=root)
 last_run = True
 
+paused = False
+
 def on_pause():
+    global paused
+    paused = True
     print("paused")
 
 def on_resume():
+    global paused
+    paused = False
     print("resumed")
 
 def update():
     global last_run
 
     current_run = game.update()
-    #save_binary.save_grid(game.grid)
+    if not paused:
+        folders.save_grid()
     if last_run and not current_run:
         on_pause()
     elif not last_run and current_run:

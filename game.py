@@ -1,7 +1,6 @@
 import grid as gd
 import queue_ as qe
 import description as dp
-import cycle
 
 import tkinter
 from PIL import ImageTk
@@ -214,5 +213,10 @@ class Game:
 
         return True
 
-    def get_cycle(self):
-        return cycle.Cycle(self.level, self.score, self.grid)
+    def get_binary(self, BYTES_PER_INT=5):
+        bin_data = self.speed.to_bytes(BYTES_PER_INT, 'big')
+        bin_data += self.level.to_bytes(BYTES_PER_INT, 'big')
+        bin_data += self.score.to_bytes(BYTES_PER_INT, 'big')
+        bin_data += self.grid.get_binary(BYTES_PER_INT=BYTES_PER_INT)
+
+        return bin_data
