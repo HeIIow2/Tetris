@@ -1,6 +1,7 @@
 import grid as gd
-import queue as qe
+import queue_ as qe
 import description as dp
+import cycle
 
 import tkinter
 from PIL import ImageTk
@@ -212,3 +213,6 @@ class Game:
         self.cycle += 1
 
         return True
+
+    def get_cycle(self):
+        return cycle.Cycle(self.level, self.score, self.grid)
