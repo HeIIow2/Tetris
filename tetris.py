@@ -16,6 +16,7 @@ paused = False
 def on_pause():
     global paused
     paused = True
+    folders.dump_replay()
     print("paused")
 
 def on_resume():

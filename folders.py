@@ -27,6 +27,8 @@ class Folders:
         self.REPLAY_PATH = os.path.join(self.PATH, REPLAY_FOLDER)
         self.CONFIG_PATH = os.path.join(self.PATH, CONFIG_FILE)
 
+        self.new_replay()
+
         self.config = None
         self.is_connected = True
         self.download_config()
@@ -83,6 +85,8 @@ class Folders:
         self.game = None
         self.cycle = None
 
+        self.gane_replay = []
+
     def read_config_file(self):
         with open(self.CONFIG_PATH, "r") as config_file:
             self.config = json.load(config_file)
@@ -112,7 +116,21 @@ class Folders:
         return self.game
 
     def save_grid(self):
-        print(self.cycle.get_cycle())
+        self.gane_replay.append(self.cycle.get_cycle())
+
+    def new_replay(self):
+        self.name = f"game{len(os.listdir(self.REPLAY_PATH))}.trp"
+        self.REPLAY_FILE = os.path.join(self.REPLAY_PATH, self.name)
+
+    def dump_replay(self):
+        with open(self.REPLAY_FILE, "ab") as replay_file:
+            for row in self.gane_replay:
+                replay_file.write(row)
+                replay_file.write(b'\n')
+            self.gane_replay = []
+
+        if self.game.game_over:
+            self.new_replay()
 
 
 if __name__ == "__main__":

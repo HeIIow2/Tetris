@@ -44,6 +44,7 @@ class Game:
         self.set_speed()
 
         self.broken_lines = 0
+        
 
     def reset_level(self):
         self.score = 0
