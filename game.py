@@ -6,7 +6,7 @@ import tkinter
 from PIL import ImageTk
 
 class Game:
-    def __init__(self, ui_frame, figures: list, queue_len=5, queue_width=4, width=10, height=20, level=1, start_speed=800, start_score=0, level_cap=20):
+    def __init__(self, ui_frame, figures: list, queue_len=5, queue_width=4, width=10, height=20, level=1, start_speed=800, start_score=0, level_cap=20, highscore=0):
         self.queue_len = queue_len
         self.cycle = 0
 
@@ -29,21 +29,24 @@ class Game:
         self.render()
         self.img_label.grid(row=1, column=1)
 
-        self.description_frame = tkinter.Frame(self.ui_frame)
-        self.description = dp.Description(self.description_frame, [("level", level), ("score", start_score), ("speed", start_speed), ("rows", "0/10")])
-        self.description_frame.grid(row=1, column=2)
-
         self.game_over = False
         self.pause = False
 
         self.score = start_score
+        self.highscore = highscore
         self.level = level
         self.level_cap = level_cap
         self.speed = start_speed
-        
-        self.set_speed()
 
         self.broken_lines = 0
+
+        self.description_frame = tkinter.Frame(self.ui_frame)
+        self.description = dp.Description(self.description_frame,
+                                          [("level", level), ("highscore", self.highscore), ("score", start_score),
+                                           ("speed", start_speed), ("rows", "0/10")])
+        self.description_frame.grid(row=1, column=2)
+
+        self.set_speed()
         
 
     def reset_level(self):
@@ -54,6 +57,7 @@ class Game:
         self.status_label.config(text="Level: 1")
 
         self.description.set_element("score", self.score)
+        self.description.set_element("highscore", self.highscore)
         self.description.set_element("level", self.level)
         self.update_level()
 
@@ -96,8 +100,8 @@ class Game:
         # https://tetris.fandom.com/wiki/Scoring
 
         POINTS = [0, 40, 100, 300, 1200]
-
-        return POINTS[broken_rows]*self.level
+        score = POINTS[broken_rows]*self.level
+        return score
 
     def update_level(self):
         # https://gaming.stackexchange.com/questions/379636/how-does-the-leveling-system-on-tetris-work
@@ -198,6 +202,9 @@ class Game:
             self.update_level()
 
         self.score += self.get_score(full_rows) + continuous_soft_drop + hard_drop
+        if self.score > self.highscore:
+            self.highscore = self.score
+            self.description.set_element("highscore", self.highscore)
         self.description.set_element("score", self.score)
 
         if self.grid.allow_spawn():
@@ -220,4 +227,4 @@ class Game:
         bin_data += self.score.to_bytes(BYTES_PER_INT, 'big')
         bin_data += self.grid.get_binary(BYTES_PER_INT=BYTES_PER_INT)
 
-        return bin_data
+        return self.score, bin_data

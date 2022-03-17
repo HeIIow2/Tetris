@@ -1,4 +1,3 @@
-from itertools import cycle
 import game as gm
 
 BYTES_PER_INT = 5

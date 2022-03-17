@@ -24,8 +24,18 @@ class Folders:
 
         REPLAY_FOLDER = "saves"
         CONFIG_FILE = "config.json"
+        HIGHSCORE_FILE = "highscore"
         self.REPLAY_PATH = os.path.join(self.PATH, REPLAY_FOLDER)
         self.CONFIG_PATH = os.path.join(self.PATH, CONFIG_FILE)
+        self.HIGHSCORE_PATH = os.path.join(self.PATH, HIGHSCORE_FILE)
+
+        if not os.path.exists(self.HIGHSCORE_PATH):
+            with open(self.HIGHSCORE_PATH, "w") as highscore_file:
+                highscore_file.write("0")
+                self.highscore = 0
+        else:
+            with open(self.HIGHSCORE_PATH, "r") as highscore_file:
+                self.highscore = int(highscore_file.read())
 
         if not os.path.exists(self.REPLAY_PATH):
             os.makedirs(self.REPLAY_PATH)
@@ -114,12 +124,20 @@ class Folders:
 
     def get_game(self, root):
         if self.game is None:
-            self.game = gm.Game(root, self.figures, width=self.grid_width, height=self.grid_height, queue_width=self.max_width, queue_len=self.queue_len, level=self.start_level, level_cap=self.level_cap)
+            self.game = gm.Game(root, self.figures, width=self.grid_width, height=self.grid_height, queue_width=self.max_width, queue_len=self.queue_len, level=self.start_level, level_cap=self.level_cap, highscore=self.highscore)
             self.cycle = cl.Cycle(self.game)
         return self.game
 
     def save_grid(self):
-        self.gane_replay.append(self.cycle.get_cycle())
+        score, replay = self.cycle.get_cycle()
+        self.gane_replay.append(replay)
+        self.save_score(score)
+
+    def save_score(self, score):
+        if score > self.highscore:
+            with open(self.HIGHSCORE_PATH, "w") as highscore_file:
+                self.highscore = score
+                highscore_file.write(str(self.highscore))
 
     def new_replay(self):
         self.name = f"game{len(os.listdir(self.REPLAY_PATH))}.trp"
