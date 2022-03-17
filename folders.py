@@ -27,6 +27,9 @@ class Folders:
         self.REPLAY_PATH = os.path.join(self.PATH, REPLAY_FOLDER)
         self.CONFIG_PATH = os.path.join(self.PATH, CONFIG_FILE)
 
+        if not os.path.exists(self.REPLAY_PATH):
+            os.makedirs(self.REPLAY_PATH)
+
         self.new_replay()
 
         self.config = None
